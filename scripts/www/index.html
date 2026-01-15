@@ -1,11 +1,506 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋小游戏 (HTML版)</title>
+    <style>
+        :root {
+            --board-bg: #e6cca0;      /* 浅木色 */
+            --line-color: #5d4037;    /* 深棕色线条 */
+            --black-piece: #000000;
+            --white-piece: #ffffff;
+            --grid-size: 30px;
+            --piece-size: 28px;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '宋体', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        /* 标题与状态栏 */
+        .header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+
+        .status-bar {
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+
+        /* 棋盘区域 */
+        .board-container {
+            background-color: var(--board-bg);
+            padding: 15px; /* 棋盘边缘留白 */
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        #board {
+            width: calc(15 * var(--grid-size));
+            height: calc(15 * var(--grid-size));
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            cursor: pointer;
+        }
+
+        /* 棋盘格子（交叉点逻辑） */
+        .cell {
+            width: var(--grid-size);
+            height: var(--grid-size);
+            position: relative;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 绘制横竖线 */
+        .cell::before { /* 横线 */
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background-color: var(--line-color);
+            top: 50%;
+            left: 0;
+            z-index: 0;
+        }
+
+        .cell::after { /* 竖线 */
+            content: '';
+            position: absolute;
+            height: 100%;
+            width: 1px;
+            background-color: var(--line-color);
+            left: 50%;
+            top: 0;
+            z-index: 0;
+        }
+
+        /* 边缘特殊处理：去掉延伸到棋盘外的线 */
+        .cell.top-edge::after { top: 50%; height: 50%; }
+        .cell.bottom-edge::after { height: 50%; }
+        .cell.left-edge::before { left: 50%; width: 50%; }
+        .cell.right-edge::before { width: 50%; }
+
+        /* 棋子样式 */
+        .piece {
+            width: var(--piece-size);
+            height: var(--piece-size);
+            border-radius: 50%;
+            z-index: 1; /* 在线条之上 */
+            box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #444, #000);
+        }
+
+        .piece.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+            border: 1px solid #ccc; /* 白色描边需求 */
+        }
+        
+        /* 最新落子标记 */
+        .piece.last-move::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background-color: red;
+            border-radius: 50%;
+        }
+
+        /* 悬停预览 (Ghost Piece) */
+        #board.turn-black .cell:not(.has-piece):hover::after {
+            content: '';
+            width: var(--piece-size);
+            height: var(--piece-size);
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #board.turn-white .cell:not(.has-piece):hover::after {
+            content: '';
+            width: var(--piece-size);
+            height: var(--piece-size);
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #999;
+        }
+        
+        /* 覆盖原本的线条after，需要提高优先级或重置 */
+        #board .cell:hover::after {
+            /* 保持竖线显示，预览层用单独元素或伪元素技巧。
+               由于::after已被用于画线，这里我们动态添加一个预览层DOM更稳妥，
+               或者简化：只改变cursor。
+               
+               修正方案：为了严格符合CSS绘制且不增加DOM，
+               我们利用 radial-gradient 在 :hover 状态下修改 background 
+               来模拟半透明棋子，而不破坏 ::before/::after 的线条。
+            */
+            content: ''; /* 恢复 content */
+        }
+        
+        /* 修正后的悬停逻辑：使用 radial-gradient 在 cell 本身模拟 */
+        #board.turn-black .cell:not(.has-piece):hover {
+            background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.3) 45%, transparent 46%);
+        }
+        #board.turn-white .cell:not(.has-piece):hover {
+            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.6) 45%, transparent 46%);
+        }
+
+        /* 按钮区域 */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            width: 80px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+            color: var(--text-color);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #bdbdbd;
+        }
+
+        button:active {
+            background-color: #9e9e9e;
+        }
+
+        button:disabled {
+            background-color: #f5f5f5;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 音效开关 */
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        /* 禁止操作的简单的视觉反馈动画 */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>五子棋 HTML版</h1>
+        <div id="status" class="status-bar">当前回合：黑棋</div>
+    </div>
+
+    <div class="board-container" id="boardContainer">
+        <div id="board" class="turn-black">
+            </div>
+    </div>
+
+    <div class="controls">
+        <button id="btnRestart" onclick="resetGame()">重新开始</button>
+        <button id="btnUndo" onclick="undoMove()" disabled>悔棋</button>
+        <div class="sound-toggle">
+            <input type="checkbox" id="soundToggle" checked>
+            <label for="soundToggle" style="margin-left:5px; cursor:pointer;">音效</label>
+        </div>
+    </div>
+
+    <script>
+        // --- 游戏配置常量 ---
+        const BOARD_SIZE = 15;
+        const PLAYER_BLACK = 1;
+        const PLAYER_WHITE = 2;
+        
+        // --- 游戏状态 ---
+        let boardState = []; // 二维数组存储棋盘
+        let currentPlayer = PLAYER_BLACK;
+        let isGameActive = true;
+        let moveHistory = []; // 悔棋栈
+        
+        // --- DOM 元素 ---
+        const boardEl = document.getElementById('board');
+        const statusEl = document.getElementById('status');
+        const btnUndo = document.getElementById('btnUndo');
+        const soundToggle = document.getElementById('soundToggle');
+        const boardContainer = document.getElementById('boardContainer');
+
+        // --- 初始化 ---
+        function initGame() {
+            // 初始化状态
+            boardState = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
+            currentPlayer = PLAYER_BLACK;
+            isGameActive = true;
+            moveHistory = [];
+            
+            updateUIStatus();
+            renderBoard();
+            btnUndo.disabled = true;
+        }
+
+        // --- 渲染棋盘 ---
+        function renderBoard() {
+            boardEl.innerHTML = ''; // 清空现有内容
+            
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    // 处理边缘线条
+                    if (r === 0) cell.classList.add('top-edge');
+                    if (r === BOARD_SIZE - 1) cell.classList.add('bottom-edge');
+                    if (c === 0) cell.classList.add('left-edge');
+                    if (c === BOARD_SIZE - 1) cell.classList.add('right-edge');
+
+                    // 如果该位置有棋子
+                    const cellValue = boardState[r][c];
+                    if (cellValue !== 0) {
+                        const piece = document.createElement('div');
+                        piece.classList.add('piece');
+                        piece.classList.add(cellValue === PLAYER_BLACK ? 'black' : 'white');
+                        cell.classList.add('has-piece'); // 用于CSS悬停逻辑
+                        
+                        // 标记最后一步
+                        if (moveHistory.length > 0) {
+                            const last = moveHistory[moveHistory.length - 1];
+                            if (last.row === r && last.col === c) {
+                                piece.classList.add('last-move');
+                            }
+                        }
+                        
+                        cell.appendChild(piece);
+                    }
+
+                    // 绑定点击事件
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        // --- 核心交互逻辑 ---
+        function handleCellClick(row, col) {
+            if (!isGameActive) return;
+
+            // 检查是否已落子
+            if (boardState[row][col] !== 0) {
+                // 视觉反馈：禁止操作
+                // 简单的震动效果
+                const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+                if(cell) {
+                    cell.classList.add('shake');
+                    setTimeout(() => cell.classList.remove('shake'), 300);
+                }
+                return;
+            }
+
+            // 执行落子
+            placePiece(row, col);
+        }
+
+        function placePiece(row, col) {
+            // 1. 更新数据
+            boardState[row][col] = currentPlayer;
+            moveHistory.push({ row, col, player: currentPlayer });
+            
+            // 2. 播放音效
+            playClickSound();
+
+            // 3. 检查胜负
+            if (checkWin(row, col, currentPlayer)) {
+                renderBoard(); // 重绘以显示最后一步标记
+                endGame(currentPlayer === PLAYER_BLACK ? "黑棋胜" : "白棋胜");
+                return;
+            }
+            
+            // 4. 检查平局
+            if (moveHistory.length === BOARD_SIZE * BOARD_SIZE) {
+                renderBoard();
+                endGame("平局");
+                return;
+            }
+
+            // 5. 切换回合
+            currentPlayer = currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
+            updateUIStatus();
+            
+            // 6. 局部DOM更新优化 (比全量重绘更高效，但为了逻辑简单这里用了全量renderBoard的一个简化版逻辑：直接操作DOM)
+            // 为了代码简洁性和维护性，这里调用 renderBoard() 确保 "last-move" 标记正确转移
+            renderBoard();
+        }
+
+        // --- 胜负判定算法 ---
+        function checkWin(row, col, player) {
+            const directions = [
+                [1, 0],   // 横向
+                [0, 1],   // 纵向
+                [1, 1],   // 右下斜
+                [1, -1]   // 左下斜
+            ];
+
+            for (let [dr, dc] of directions) {
+                let count = 1; // 当前落子算1个
+
+                // 向一个方向搜索
+                let r = row + dr;
+                let c = col + dc;
+                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && boardState[r][c] === player) {
+                    count++;
+                    r += dr;
+                    c += dc;
+                }
+
+                // 向相反方向搜索
+                r = row - dr;
+                c = col - dc;
+                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && boardState[r][c] === player) {
+                    count++;
+                    r -= dr;
+                    c -= dc;
+                }
+
+                if (count >= 5) return true;
+            }
+            return false;
+        }
+
+        // --- 游戏结束处理 ---
+        function endGame(resultText) {
+            isGameActive = false;
+            statusEl.innerText = `游戏结束：${resultText}`;
+            statusEl.style.color = '#d32f2f';
+            // 禁用悔棋（需求未明确，但通常游戏结束可以看盘，这里保持启用以便查看，或者禁用防止修改结果）
+            // 按照需求"禁止继续落子"，这里已通过isGameActive控制。
+            // 弹窗提示
+            setTimeout(() => alert(resultText), 100);
+        }
+
+        // --- 辅助功能 ---
+        function resetGame() {
+            if (confirm('确定要重新开始吗？')) {
+                initGame();
+            }
+        }
+
+        function undoMove() {
+            if (moveHistory.length === 0 || !isGameActive) return;
+
+            // 撤销一步
+            const lastMove = moveHistory.pop();
+            boardState[lastMove.row][lastMove.col] = 0;
+            
+            // 恢复回合
+            currentPlayer = lastMove.player;
+            isGameActive = true; // 如果是在结束后悔棋，恢复游戏状态
+            
+            updateUIStatus();
+            renderBoard();
+        }
+
+        function updateUIStatus() {
+            if (!isGameActive) return;
+            const text = currentPlayer === PLAYER_BLACK ? "黑棋回合" : "白棋回合";
+            statusEl.innerText = text;
+            statusEl.style.color = '#333';
+            
+            // 更新棋盘CSS类以控制hover样式
+            boardEl.className = currentPlayer === PLAYER_BLACK ? 'turn-black' : 'turn-white';
+            
+            // 更新悔棋按钮状态
+            btnUndo.disabled = moveHistory.length === 0;
+        }
+
+        // --- 音效系统 (Web Audio API) ---
+        // 满足"无外部依赖"需求，使用代码生成简单的“哒”声
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playClickSound() {
+            if (!soundToggle.checked) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            // 模拟落子声：短促的低频音，音量快速衰减
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // 启动游戏
+        initGame();
+
+    </script>
+</body>
 </html>
