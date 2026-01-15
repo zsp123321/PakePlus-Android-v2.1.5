@@ -1,11 +1,413 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记账软件 - 个人财务管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;background-color:#f5f5f5}#app{min-height:100vh}.page{display:none}.page.active{display:block}.auth-container{max-width:400px;margin:100px auto;padding:40px;background:white;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,.1)}.auth-header{text-align:center;margin-bottom:30px}.auth-header h1{color:#667eea;margin-bottom:10px}.auth-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid #e0e0e0}.tab-button{flex:1;padding:10px;border:none;background:none;cursor:pointer;font-size:16px;color:#666;border-bottom:2px solid transparent}.tab-button.active{color:#667eea;border-bottom-color:#667eea}.form{display:none}.form.active{display:block}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:5px;font-weight:500;color:#555}.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:16px}.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 2px rgba(102,126,234,.1)}.radio-group{display:flex;gap:20px}.radio-group label{display:flex;align-items:center;gap:5px;cursor:pointer}.primary-button{width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:6px;font-size:16px;font-weight:500;cursor:pointer;transition:transform .2s ease}.primary-button:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,.3)}.secondary-button{padding:10px 20px;background:#f8f9fa;color:#333;border:1px solid #ddd;border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s ease}.secondary-button:hover{background:#e9ecef}.danger-button{padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer}.danger-button:hover{background:#c82333}.navbar{display:flex;justify-content:space-between;align-items:center;padding:20px 40px;background:white;box-shadow:0 2px 4px rgba(0,0,0,.1)}.navbar-brand h2{color:#667eea;margin:0}.navbar-menu{display:flex;gap:20px}.nav-button{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:14px;color:#666;border-radius:4px;transition:all .2s ease}.nav-button:hover,.nav-button.active{color:#667eea;background:rgba(102,126,234,.1)}.content{padding:40px;min-height:calc(100vh - 100px)}.content-page{display:none}.content-page.active{display:block}.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}.page-header h3{color:#333;margin:0}.dashboard-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}.date-selector{display:flex;align-items:center;gap:10px}.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:30px}.summary-card{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08);text-align:center;transition:transform .3s ease}.summary-card:hover{transform:translateY(-5px);box-shadow:0 5px 15px rgba(0,0,0,.1)}.summary-card.income{border-top:4px solid #28a745}.summary-card.expense{border-top:4px solid #dc3545}.summary-card.balance{border-top:4px solid #17a2b8}.summary-card h4{color:#666;margin-bottom:10px}.summary-card .amount{font-size:24px;font-weight:600}.summary-card.income .amount{color:#28a745}.summary-card.expense .amount{color:#dc3545}.summary-card.balance .amount{color:#17a2b8}.chart-container{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08);margin-bottom:30px}.chart-container h4{color:#333;margin-bottom:20px}.recent-records{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08)}.recent-records h4{color:#333;margin-bottom:20px}.empty-state{text-align:center;padding:40px;color:#666}.empty-state p{margin-bottom:20px}.records-list{background:white;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08);overflow:hidden}.filter-bar{display:flex;gap:20px;padding:20px;border-bottom:1px solid #f0f0f0;background:#f8f9fa}.filter-bar select,.filter-bar input{padding:8px 12px;border:1px solid #ddd;border-radius:4px}#records-list-content{padding:20px}.categories-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid #e0e0e0}#categories-list{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08)}#budgets-list{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08)}.date-range-selector{display:flex;align-items:center;gap:10px}.stats-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px}.stat-card{background:white;padding:20px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08);text-align:center}.stat-card h4{color:#666;margin-bottom:10px;font-size:14px}.stat-value{font-size:20px;font-weight:600;color:#333}.settings-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px}.settings-section{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,.08)}.settings-section h4{color:#333;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #f0f0f0}.setting-item{margin-bottom:20px}.setting-item label{display:block;margin-bottom:8px;font-weight:500;color:#555}.setting-item input,.setting-item select{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px}.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5)}.modal.active{display:block}.modal-content{background-color:white;margin:15% auto;padding:30px;border-radius:10px;width:90%;max-width:500px;box-shadow:0 5px 20px rgba(0,0,0,.2);animation:slideDown .3s ease}@keyframes slideDown{from{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #f0f0f0}.modal-header h3{margin:0;color:#333}.close-button{background:none;border:none;font-size:24px;cursor:pointer;color:#666}.close-button:hover{color:#333}.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:30px;padding-top:20px;border-top:1px solid #f0f0f0}.record-item{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid #f0f0f0}.record-info{flex:1}.record-category{font-weight:500;margin-bottom:5px}.record-date{font-size:12px;color:#666;margin-bottom:5px}.record-description{font-size:12px;color:#999}.record-amount{font-weight:600}.record-amount.income{color:#28a745}.record-amount.expense{color:#dc3545}.record-actions{display:flex;gap:10px;align-items:center}.delete-record-button{padding:5px 10px;font-size:12px;border:1px solid #dc3545;background:#dc3545;color:white;border-radius:4px;cursor:pointer;transition:all .2s ease}.delete-record-button:hover{background:#c82333}.categories-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}.category-card{background:#f8f9fa;padding:20px;border-radius:8px;text-align:center;border:1px solid #e0e0e0}.category-icon{font-size:24px;margin-bottom:10px}.category-name{font-weight:500;margin-bottom:10px}.category-actions{display:flex;justify-content:center;gap:10px}.category-actions button{padding:5px 10px;font-size:12px;border:1px solid #ddd;background:white;border-radius:4px;cursor:pointer}.budget-item{background:#f8f9fa;padding:20px;border-radius:8px;margin-bottom:20px;border:1px solid #e0e0e0}.budget-info{margin-bottom:15px}.budget-name{font-weight:500;margin-bottom:5px}.budget-period{font-size:12px;color:#666}.budget-amount{font-size:18px;font-weight:600;margin-bottom:10px}.budget-usage{font-size:14px;color:#666}.budget-over{font-size:12px;color:#dc3545;margin-top:5px}@media (max-width:768px){.navbar{flex-direction:column;padding:20px;gap:20px}.navbar-menu{flex-wrap:wrap;justify-content:center}.content{padding:20px}.summary-cards{grid-template-columns:1fr}.stats-cards{grid-template-columns:1fr}.filter-bar{flex-direction:column;align-items:stretch}.date-range-selector{flex-direction:column;align-items:stretch}.modal-content{margin:20% auto;width:95%}}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录/注册页面 -->
+        <div id="auth-page" class="page active">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h1>记账软件</h1>
+                    <p>轻松管理您的财务</p>
+                </div>
+                
+                <div class="auth-tabs">
+                    <button id="login-tab" class="tab-button active">登录</button>
+                    <button id="register-tab" class="tab-button">注册</button>
+                </div>
+                
+                <!-- 登录表单 -->
+                <div id="login-form" class="form active">
+                    <div class="form-group">
+                        <label for="login-email">邮箱</label>
+                        <input type="email" id="login-email" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">密码</label>
+                        <input type="password" id="login-password" placeholder="请输入密码">
+                    </div>
+                    <button id="login-button" class="primary-button">登录</button>
+                </div>
+                
+                <!-- 注册表单 -->
+                <div id="register-form" class="form">
+                    <div class="form-group">
+                        <label for="register-username">用户名</label>
+                        <input type="text" id="register-username" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">邮箱</label>
+                        <input type="email" id="register-email" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">密码</label>
+                        <input type="password" id="register-password" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-nickname">昵称</label>
+                        <input type="text" id="register-nickname" placeholder="请输入昵称">
+                    </div>
+                    <button id="register-button" class="primary-button">注册</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主页面 -->
+        <div id="main-page" class="page">
+            <!-- 导航栏 -->
+            <nav class="navbar">
+                <div class="navbar-brand">
+                    <h2>记账软件</h2>
+                </div>
+                <div class="navbar-menu">
+                    <button class="nav-button active" data-page="dashboard">首页</button>
+                    <button class="nav-button" data-page="records">记账</button>
+                    <button class="nav-button" data-page="categories">分类</button>
+                    <button class="nav-button" data-page="budgets">预算</button>
+                    <button class="nav-button" data-page="statistics">统计</button>
+                    <button class="nav-button" data-page="settings">设置</button>
+                </div>
+                <div class="navbar-user">
+                    <button id="logout-button" class="secondary-button">退出登录</button>
+                </div>
+            </nav>
+            
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 仪表盘页面 -->
+                <div id="dashboard" class="content-page active">
+                    <div class="dashboard-header">
+                        <h3>财务概览</h3>
+                        <div class="date-selector">
+                            <button id="prev-month">←</button>
+                            <span id="current-month">2026年1月</span>
+                            <button id="next-month">→</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 收支汇总 -->
+                    <div class="summary-cards">
+                        <div class="summary-card income">
+                            <h4>本月收入</h4>
+                            <div class="amount" id="monthly-income">¥0.00</div>
+                        </div>
+                        <div class="summary-card expense">
+                            <h4>本月支出</h4>
+                            <div class="amount" id="monthly-expense">¥0.00</div>
+                        </div>
+                        <div class="summary-card balance">
+                            <h4>本月结余</h4>
+                            <div class="amount" id="monthly-balance">¥0.00</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 收支趋势 -->
+                    <div class="chart-container">
+                        <h4>收支趋势</h4>
+                        <canvas id="trend-chart"></canvas>
+                    </div>
+                    
+                    <!-- 最近记录 -->
+                    <div class="recent-records">
+                        <h4>最近记录</h4>
+                        <div id="recent-records-list">
+                            <div class="empty-state">
+                                <p>暂无记账记录</p>
+                                <button id="add-first-record" class="primary-button">添加第一条记录</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 记账页面 -->
+                <div id="records" class="content-page">
+                    <div class="page-header">
+                        <h3>记账</h3>
+                        <button id="add-record-button" class="primary-button">+ 添加记录</button>
+                    </div>
+                    
+                    <!-- 记录列表 -->
+                    <div class="records-list">
+                        <div class="filter-bar">
+                            <select id="record-type-filter">
+                                <option value="all">全部</option>
+                                <option value="income">收入</option>
+                                <option value="expense">支出</option>
+                            </select>
+                            <input type="date" id="record-date-filter">
+                        </div>
+                        <div id="records-list-content">
+                            <div class="empty-state">
+                                <p>暂无记账记录</p>
+                                <button id="add-record-empty" class="primary-button">添加记录</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分类页面 -->
+                <div id="categories" class="content-page">
+                    <div class="page-header">
+                        <h3>分类管理</h3>
+                        <button id="add-category-button" class="primary-button">+ 添加分类</button>
+                    </div>
+                    
+                    <div class="categories-tabs">
+                        <button id="income-categories-tab" class="tab-button active">收入分类</button>
+                        <button id="expense-categories-tab" class="tab-button">支出分类</button>
+                    </div>
+                    
+                    <div id="categories-list">
+                        <div class="empty-state">
+                            <p>暂无分类</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 预算页面 -->
+                <div id="budgets" class="content-page">
+                    <div class="page-header">
+                        <h3>预算管理</h3>
+                        <button id="add-budget-button" class="primary-button">+ 添加预算</button>
+                    </div>
+                    
+                    <div id="budgets-list">
+                        <div class="empty-state">
+                            <p>暂无预算</p>
+                            <button id="add-budget-empty" class="primary-button">添加预算</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计页面 -->
+                <div id="statistics" class="content-page">
+                    <div class="page-header">
+                        <h3>统计分析</h3>
+                        <div class="date-range-selector">
+                            <input type="date" id="stats-start-date">
+                            <span>至</span>
+                            <input type="date" id="stats-end-date">
+                            <button id="apply-date-range" class="primary-button">应用</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计卡片 -->
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <h4>总收入</h4>
+                            <div class="stat-value" id="total-income">¥0.00</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>总支出</h4>
+                            <div class="stat-value" id="total-expense">¥0.00</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>结余</h4>
+                            <div class="stat-value" id="total-balance">¥0.00</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分类饼图 -->
+                    <div class="chart-container">
+                        <h4>支出分类占比</h4>
+                        <canvas id="category-chart"></canvas>
+                    </div>
+                    
+                    <!-- 收支趋势图 -->
+                    <div class="chart-container">
+                        <h4>收支趋势</h4>
+                        <canvas id="statistics-trend-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 设置页面 -->
+                <div id="settings" class="content-page">
+                    <div class="page-header">
+                        <h3>设置</h3>
+                    </div>
+                    
+                    <div class="settings-sections">
+                        <div class="settings-section">
+                            <h4>个人信息</h4>
+                            <div class="setting-item">
+                                <label>昵称</label>
+                                <input type="text" id="setting-nickname">
+                            </div>
+                            <div class="setting-item">
+                                <label>默认币种</label>
+                                <select id="setting-currency">
+                                    <option value="CNY">人民币 (¥)</option>
+                                    <option value="USD">美元 ($)</option>
+                                    <option value="EUR">欧元 (€)</option>
+                                </select>
+                            </div>
+                            <button id="save-profile" class="primary-button">保存</button>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h4>数据管理</h4>
+                            <button id="backup-data" class="secondary-button">备份数据</button>
+                            <button id="export-data" class="secondary-button">导出数据</button>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h4>账号安全</h4>
+                            <button id="change-password" class="secondary-button">修改密码</button>
+                            <button id="logout-settings" class="danger-button">退出登录</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 添加记录弹窗 -->
+        <div id="add-record-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加记录</h3>
+                    <button class="close-button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>类型</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="record-type" value="income" checked> 收入</label>
+                            <label><input type="radio" name="record-type" value="expense"> 支出</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="record-amount">金额</label>
+                        <input type="number" id="record-amount" placeholder="请输入金额" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="record-category">分类</label>
+                        <select id="record-category"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="record-date">日期</label>
+                        <input type="date" id="record-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="record-description">备注</label>
+                        <textarea id="record-description" placeholder="请输入备注"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary-button close-modal">取消</button>
+                    <button id="save-record-button" class="primary-button">保存</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 添加分类弹窗 -->
+        <div id="add-category-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加分类</h3>
+                    <button class="close-button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>类型</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="category-type" value="income"> 收入</label>
+                            <label><input type="radio" name="category-type" value="expense" checked> 支出</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="category-name">分类名称</label>
+                        <input type="text" id="category-name" placeholder="请输入分类名称">
+                    </div>
+                    <div class="form-group">
+                        <label for="category-icon">图标</label>
+                        <input type="text" id="category-icon" placeholder="请输入图标名称">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary-button close-modal">取消</button>
+                    <button id="save-category-button" class="primary-button">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AppState={user:null,token:null,currentPage:'dashboard',currentMonth:new Date(),records:[],categories:[{id:1,name:'工资',type:'income',icon:'wallet'},{id:2,name:'兼职',type:'income',icon:'briefcase'},{id:3,name:'理财收益',type:'income',icon:'trending-up'},{id:4,name:'其他收入',type:'income',icon:'plus-circle'},{id:5,name:'餐饮',type:'expense',icon:'utensils'},{id:6,name:'交通',type:'expense',icon:'car'},{id:7,name:'住房',type:'expense',icon:'home'},{id:8,name:'购物',type:'expense',icon:'shopping-cart'},{id:9,name:'娱乐',type:'expense',icon:'film'},{id:10,name:'医疗',type:'expense',icon:'heartbeat'},{id:11,name:'教育',type:'expense',icon:'book'},{id:12,name:'其他支出',type:'expense',icon:'ellipsis-h'}],budgets:[]};document.addEventListener('DOMContentLoaded',function(){initializeApp();setupEventListeners();loadMockData()});function initializeApp(){const savedUser=localStorage.getItem('finance-user');const savedRecords=localStorage.getItem('finance-records');const savedCategories=localStorage.getItem('finance-categories');if(savedUser){AppState.user=JSON.parse(savedUser);showMainPage();loadDashboardData()}else{showAuthPage()}if(savedRecords){AppState.records=JSON.parse(savedRecords)}if(savedCategories){AppState.categories=JSON.parse(savedCategories)}}function loadMockData(){const mockRecords=[{id:1,user_id:1,amount:5000,type:'income',category_id:1,category_name:'工资',date:'2026-01-01',description:'月薪'},{id:2,user_id:1,amount:128,type:'expense',category_id:5,category_name:'餐饮',date:'2026-01-02',description:'午餐'},{id:3,user_id:1,amount:35,type:'expense',category_id:6,category_name:'交通',date:'2026-01-03',description:'打车'},{id:4,user_id:1,amount:899,type:'expense',category_id:8,category_name:'购物',date:'2026-01-04',description:'购物'},{id:5,user_id:1,amount:200,type:'expense',category_id:9,category_name:'娱乐',date:'2026-01-05',description:'电影票'}];AppState.records=mockRecords;localStorage.setItem('finance-records',JSON.stringify(mockRecords))}function setupEventListeners(){document.getElementById('login-tab').addEventListener('click',()=>switchAuthTab('login'));document.getElementById('register-tab').addEventListener('click',()=>switchAuthTab('register'));document.getElementById('login-button').addEventListener('click',handleLogin);document.getElementById('register-button').addEventListener('click',handleRegister);document.querySelectorAll('.nav-button').forEach(button=>{button.addEventListener('click',(e)=>{const page=e.target.dataset.page;switchPage(page)})});document.getElementById('logout-button').addEventListener('click',handleLogout);document.getElementById('logout-settings').addEventListener('click',handleLogout);document.getElementById('add-record-button').addEventListener('click',showAddRecordModal);document.getElementById('add-first-record').addEventListener('click',showAddRecordModal);document.getElementById('add-record-empty').addEventListener('click',showAddRecordModal);document.getElementById('save-record-button').addEventListener('click',saveRecord);document.querySelectorAll('.close-button, .close-modal').forEach(button=>{button.addEventListener('click',closeModal)});document.getElementById('income-categories-tab').addEventListener('click',()=>switchCategoryTab('income'));document.getElementById('expense-categories-tab').addEventListener('click',()=>switchCategoryTab('expense'));document.getElementById('prev-month').addEventListener('click',()=>changeMonth(-1));document.getElementById('next-month').addEventListener('click',()=>changeMonth(1));document.getElementById('apply-date-range').addEventListener('click',applyDateRange);document.getElementById('save-profile').addEventListener('click',saveProfile);document.getElementById('backup-data').addEventListener('click',backupData);document.getElementById('export-data').addEventListener('click',exportData);document.getElementById('add-category-button').addEventListener('click',showAddCategoryModal);document.getElementById('save-category-button').addEventListener('click',saveCategory)}function switchAuthTab(tab){if(tab==='login'){document.getElementById('login-tab').classList.add('active');document.getElementById('register-tab').classList.remove('active');document.getElementById('login-form').classList.add('active');document.getElementById('register-form').classList.remove('active')}else{document.getElementById('register-tab').classList.add('active');document.getElementById('login-tab').classList.remove('active');document.getElementById('register-form').classList.add('active');document.getElementById('login-form').classList.remove('active')}}function handleLogin(){const email=document.getElementById('login-email').value;const password=document.getElementById('login-password').value;if(!email||!password){alert('请填写所有必填字段');return}const mockUser={id:1,username:'testuser',email:email,nickname:'测试用户',default_currency:'CNY'};AppState.user=mockUser;localStorage.setItem('finance-user',JSON.stringify(mockUser));showMainPage();loadDashboardData()}function handleRegister(){const username=document.getElementById('register-username').value;const email=document.getElementById('register-email').value;const password=document.getElementById('register-password').value;const nickname=document.getElementById('register-nickname').value;if(!username||!email||!password||!nickname){alert('请填写所有必填字段');return}const mockUser={id:1,username:username,email:email,nickname:nickname,default_currency:'CNY'};AppState.user=mockUser;localStorage.setItem('finance-user',JSON.stringify(mockUser));showMainPage();loadDashboardData()}function showAuthPage(){document.getElementById('auth-page').classList.add('active');document.getElementById('main-page').classList.remove('active')}function showMainPage(){document.getElementById('main-page').classList.add('active');document.getElementById('auth-page').classList.remove('active')}function switchPage(page){document.querySelectorAll('.nav-button').forEach(button=>{button.classList.remove('active');if(button.dataset.page===page){button.classList.add('active')}});document.querySelectorAll('.content-page').forEach(contentPage=>{contentPage.classList.remove('active');if(contentPage.id===page){contentPage.classList.add('active')}});AppState.currentPage=page;if(page==='dashboard'){loadDashboardData()}else if(page==='records'){loadRecordsData()}else if(page==='categories'){loadCategoriesData()}else if(page==='budgets'){loadBudgetsData()}else if(page==='statistics'){loadStatisticsData()}else if(page==='settings'){loadSettingsData()}}function handleLogout(){localStorage.removeItem('finance-user');localStorage.removeItem('finance-records');AppState.user=null;AppState.records=[];showAuthPage()}function showAddRecordModal(){const modal=document.getElementById('add-record-modal');modal.classList.add('active');const today=new Date().toISOString().split('T')[0];document.getElementById('record-date').value=today;loadCategoryOptions()}function closeModal(){document.getElementById('add-record-modal').classList.remove('active');document.getElementById('add-category-modal').classList.remove('active')}function loadCategoryOptions(){const categorySelect=document.getElementById('record-category');const recordType=document.querySelector('input[name="record-type"]:checked').value;categorySelect.innerHTML='';AppState.categories.filter(cat=>cat.type===recordType).forEach(category=>{const option=document.createElement('option');option.value=category.id;option.textContent=category.name;categorySelect.appendChild(option)})}function showAddCategoryModal(){const modal=document.getElementById('add-category-modal');modal.classList.add('active');const activeTab=document.querySelector('.categories-tabs .tab-button.active');const type=activeTab.textContent.includes('收入')?'income':'expense';const radioButtons=document.querySelectorAll('input[name="category-type"]');radioButtons.forEach(radio=>{radio.checked=radio.value===type})}function saveCategory(){const categoryType=document.querySelector('input[name="category-type"]:checked').value;const categoryName=document.getElementById('category-name').value;const categoryIcon=document.getElementById('category-icon').value;if(!categoryName){alert('请填写分类名称');return}const newCategory={id:AppState.categories.length+1,name:categoryName,type:categoryType,icon:categoryIcon||'📁'};AppState.categories.push(newCategory);localStorage.setItem('finance-categories',JSON.stringify(AppState.categories));document.getElementById('add-category-modal').classList.remove('active');alert('分类添加成功');loadCategoriesData()}function saveRecord(){const recordType=document.querySelector('input[name="record-type"]:checked').value;const amount=document.getElementById('record-amount').value;const categoryId=document.getElementById('record-category').value;const date=document.getElementById('record-date').value;const description=document.getElementById('record-description').value;if(!amount||!categoryId||!date){alert('请填写金额、分类和日期');return}const newRecord={id:AppState.records.length+1,user_id:AppState.user.id,amount:parseFloat(amount),type:recordType,category_id:parseInt(categoryId),category_name:AppState.categories.find(cat=>cat.id===parseInt(categoryId)).name,date:date,description:description,created_at:new Date().toISOString()};AppState.records.push(newRecord);localStorage.setItem('finance-records',JSON.stringify(AppState.records));closeModal();alert('记录保存成功');loadDashboardData();loadRecordsData()}function loadDashboardData(){if(!AppState.user)return;const monthElement=document.getElementById('current-month');const incomeElement=document.getElementById('monthly-income');const expenseElement=document.getElementById('monthly-expense');const balanceElement=document.getElementById('monthly-balance');const year=AppState.currentMonth.getFullYear();const month=AppState.currentMonth.getMonth()+1;monthElement.textContent=`${year}年${month}月`;const startDate=`${year}-${String(month).padStart(2,'0')}-01`;const endDate=`${year}-${String(month).padStart(2,'0')}-${new Date(year,month,0).getDate()}`;const monthlyRecords=AppState.records.filter(record=>{return record.date>=startDate&&record.date<=endDate});const income=monthlyRecords.filter(r=>r.type==='income').reduce((sum,r)=>sum+r.amount,0);const expense=monthlyRecords.filter(r=>r.type==='expense').reduce((sum,r)=>sum+r.amount,0);const balance=income-expense;incomeElement.textContent=`¥${income.toFixed(2)}`;expenseElement.textContent=`¥${expense.toFixed(2)}`;balanceElement.textContent=`¥${balance.toFixed(2)}`;loadTrendChart(monthlyRecords);loadRecentRecords()}function loadTrendChart(records){const ctx=document.getElementById('trend-chart').getContext('2d');if(window.trendChart){window.trendChart.destroy()}const dateMap={};records.forEach(record=>{if(!dateMap[record.date]){dateMap[record.date]={date:record.date,income:0,expense:0}}if(record.type==='income'){dateMap[record.date].income+=record.amount}else{dateMap[record.date].expense+=record.amount}});const trends=Object.values(dateMap).sort((a,b)=>a.date.localeCompare(b.date));const labels=trends.map(item=>item.date);const incomeData=trends.map(item=>item.income);const expenseData=trends.map(item=>item.expense);window.trendChart=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:'收入',data:incomeData,borderColor:'#28a745',backgroundColor:'rgba(40, 167, 69, 0.1)',fill:true,tension:0.4},{label:'支出',data:expenseData,borderColor:'#dc3545',backgroundColor:'rgba(220, 53, 69, 0.1)',fill:true,tension:0.4}]},options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{mode:'index',intersect:false}},scales:{y:{beginAtZero:true,ticks:{callback:function(value){return'¥'+value}}}}}})}function loadRecentRecords(){const recordsList=document.getElementById('recent-records-list');const recentRecords=AppState.records.slice(-5).reverse();if(recentRecords.length===0){recordsList.innerHTML=`
+                    <div class="empty-state">
+                        <p>暂无记账记录</p>
+                        <button id="add-first-record" class="primary-button">添加第一条记录</button>
+                    </div>
+                `;document.getElementById('add-first-record').addEventListener('click',showAddRecordModal)}else{recordsList.innerHTML=recentRecords.map(record=>`
+                    <div class="record-item">
+                        <div class="record-info">
+                            <div class="record-category">${record.category_name}</div>
+                            <div class="record-date">${record.date}</div>
+                            <div class="record-description">${record.description||''}</div>
+                        </div>
+                        <div class="record-amount ${record.type==='income'?'income':'expense'}">
+                            ${record.type==='income'?'+':'-'}¥${record.amount.toFixed(2)}
+                        </div>
+                    </div>
+                `).join('')}}function loadRecordsData(){if(!AppState.user)return;const recordsListContent=document.getElementById('records-list-content');if(AppState.records.length===0){recordsListContent.innerHTML=`
+                    <div class="empty-state">
+                        <p>暂无记账记录</p>
+                        <button id="add-record-empty" class="primary-button">添加记录</button>
+                    </div>
+                `;document.getElementById('add-record-empty').addEventListener('click',showAddRecordModal)}else{recordsListContent.innerHTML=AppState.records.map(record=>`
+                    <div class="record-item">
+                        <div class="record-info">
+                            <div class="record-category">${record.category_name}</div>
+                            <div class="record-date">${record.date}</div>
+                            <div class="record-description">${record.description||''}</div>
+                        </div>
+                        <div class="record-amount ${record.type==='income'?'income':'expense'}">
+                            ${record.type==='income'?'+':'-'}¥${record.amount.toFixed(2)}
+                        </div>
+                        <div class="record-actions">
+                            <button class="delete-record-button" data-id="${record.id}">删除</button>
+                        </div>
+                    </div>
+                `).join('');AppState.records.forEach(record=>{const deleteButton=document.querySelector(`.delete-record-button[data-id="${record.id}"]`);if(deleteButton){deleteButton.addEventListener('click',()=>deleteRecord(record.id))}})}}function deleteRecord(recordId){if(!AppState.user){alert('请先登录');return}const record=AppState.records.find(r=>r.id===recordId);if(!record){alert('记录不存在');return}if(record.user_id!==AppState.user.id){alert('无权限删除此记录');return}if(confirm(`确定要删除记录吗？\n分类：${record.category_name}\n金额：${record.type==='income'?'+':'-'}¥${record.amount.toFixed(2)}\n日期：${record.date}`)){AppState.records=AppState.records.filter(r=>r.id!==recordId);localStorage.setItem('finance-records',JSON.stringify(AppState.records));saveDeleteLog(record);alert('记录删除成功');loadDashboardData();loadRecordsData()}}function saveDeleteLog(record){const logs=JSON.parse(localStorage.getItem('finance-delete-logs')||'[]');logs.push({id:Date.now(),user_id:AppState.user.id,user_email:AppState.user.email,record_id:record.id,record_type:record.type,record_category:record.category_name,record_amount:record.amount,record_date:record.date,delete_time:new Date().toISOString()});localStorage.setItem('finance-delete-logs',JSON.stringify(logs))}function loadCategoriesData(){if(!AppState.user)return;const categoriesList=document.getElementById('categories-list');const activeTab=document.querySelector('.categories-tabs .tab-button.active');const type=activeTab.textContent.includes('收入')?'income':'expense';const filteredCategories=AppState.categories.filter(cat=>cat.type===type);categoriesList.innerHTML=`
+                <div class="categories-grid">
+                    ${filteredCategories.map(category=>`
+                        <div class="category-card">
+                            <div class="category-icon">${category.icon||'📁'}</div>
+                            <div class="category-name">${category.name}</div>
+                            <div class="category-actions">
+                                <button class="edit-category">编辑</button>
+                                <button class="delete-category">删除</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `}function loadBudgetsData(){if(!AppState.user)return;const budgetsList=document.getElementById('budgets-list');if(AppState.budgets.length===0){budgetsList.innerHTML=`
+                    <div class="empty-state">
+                        <p>暂无预算</p>
+                        <button id="add-budget-empty" class="primary-button">添加预算</button>
+                    </div>
+                `}else{budgetsList.innerHTML=AppState.budgets.map(budget=>`
+                    <div class="budget-item">
+                        <div class="budget-info">
+                            <div class="budget-name">${budget.type==='overall'?'总预算':'分类预算'}</div>
+                            <div class="budget-period">${budget.start_date} 至 ${budget.end_date}</div>
+                        </div>
+                        <div class="budget-details">
+                            <div class="budget-amount">¥${budget.amount.toFixed(2)}</div>
+                            <div class="budget-usage">
+                                使用: ¥${(budget.usage?.used||0).toFixed(2)} (${(budget.usage?.percentage||0).toFixed(1)}%)
+                            </div>
+                            ${budget.usage?.is_over?'<div class="budget-over">已超支</div>':''}
+                        </div>
+                    </div>
+                `).join('')}}function loadStatisticsData(){if(!AppState.user)return;const today=new Date();const startOfMonth=new Date(today.getFullYear(),today.getMonth(),1).toISOString().split('T')[0];const endOfMonth=new Date(today.getFullYear(),today.getMonth()+1,0).toISOString().split('T')[0];document.getElementById('stats-start-date').value=startOfMonth;document.getElementById('stats-end-date').value=endOfMonth;fetchStatisticsData(startOfMonth,endOfMonth)}function applyDateRange(){const startDate=document.getElementById('stats-start-date').value;const endDate=document.getElementById('stats-end-date').value;if(startDate&&endDate){fetchStatisticsData(startDate,endDate)}}function fetchStatisticsData(startDate,endDate){if(!AppState.user)return;const filteredRecords=AppState.records.filter(record=>{return record.date>=startDate&&record.date<=endDate});const income=filteredRecords.filter(r=>r.type==='income').reduce((sum,r)=>sum+r.amount,0);const expense=filteredRecords.filter(r=>r.type==='expense').reduce((sum,r)=>sum+r.amount,0);const balance=income-expense;document.getElementById('total-income').textContent=`¥${income.toFixed(2)}`;document.getElementById('total-expense').textContent=`¥${expense.toFixed(2)}`;document.getElementById('total-balance').textContent=`¥${balance.toFixed(2)}`;loadCategoryChart(filteredRecords.filter(r=>r.type==='expense'));loadStatisticsTrendChart(filteredRecords)}function loadCategoryChart(expenseRecords){const ctx=document.getElementById('category-chart').getContext('2d');if(window.categoryChart){window.categoryChart.destroy()}const categoryMap={};expenseRecords.forEach(record=>{if(!categoryMap[record.category_id]){categoryMap[record.category_id]={id:record.category_id,name:record.category_name,total:0}}categoryMap[record.category_id].total+=record.amount});const categories=Object.values(categoryMap);const labels=categories.map(cat=>cat.name);const data=categories.map(cat=>cat.total);const backgroundColors=['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#FF6384','#36A2EB','#FFCE56'];window.categoryChart=new Chart(ctx,{type:'pie',data:{labels:labels,datasets:[{data:data,backgroundColor:backgroundColors.slice(0,categories.length),borderWidth:1}]},options:{responsive:true,plugins:{legend:{position:'right'}}}})}function loadStatisticsTrendChart(records){const ctx=document.getElementById('statistics-trend-chart').getContext('2d');if(window.statisticsTrendChart){window.statisticsTrendChart.destroy()}const dateMap={};records.forEach(record=>{if(!dateMap[record.date]){dateMap[record.date]={date:record.date,income:0,expense:0}}if(record.type==='income'){dateMap[record.date].income+=record.amount}else{dateMap[record.date].expense+=record.amount}});const trends=Object.values(dateMap).sort((a,b)=>a.date.localeCompare(b.date));const labels=trends.map(item=>item.date);const incomeData=trends.map(item=>item.income);const expenseData=trends.map(item=>item.expense);window.statisticsTrendChart=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'收入',data:incomeData,backgroundColor:'#28a745'},{label:'支出',data:expenseData,backgroundColor:'#dc3545'}]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:function(value){return'¥'+value}}}}}})}function loadSettingsData(){if(!AppState.user)return;document.getElementById('setting-nickname').value=AppState.user.nickname;document.getElementById('setting-currency').value=AppState.user.default_currency||'CNY'}function saveProfile(){if(!AppState.user)return;const nickname=document.getElementById('setting-nickname').value;const defaultCurrency=document.getElementById('setting-currency').value;AppState.user.nickname=nickname;AppState.user.default_currency=defaultCurrency;localStorage.setItem('finance-user',JSON.stringify(AppState.user));alert('个人资料保存成功')}function backupData(){if(!AppState.user)return;const backupData={user:AppState.user,records:AppState.records,categories:AppState.categories,budgets:AppState.budgets,timestamp:new Date().toISOString()};const dataStr=JSON.stringify(backupData,null,2);const dataBlob=new Blob([dataStr],{type:'application/json'});const url=URL.createObjectURL(dataBlob);const link=document.createElement('a');link.href=url;link.download=`finance-backup-${new Date().toISOString().split('T')[0]}.json`;link.click();URL.revokeObjectURL(url);alert('数据备份成功')}function exportData(){if(!AppState.user)return;const csvHeader='ID,Date,Type,Category,Amount,Description\n';const csvContent=AppState.records.map(record=>{return`${record.id},${record.date},${record.type},${record.category_name},${record.amount},${record.description||''}`}).join('\n');const csv=csvHeader+csvContent;const dataBlob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(dataBlob);const link=document.createElement('a');link.href=url;link.download=`finance-export-${new Date().toISOString().split('T')[0]}.csv`;link.click();URL.revokeObjectURL(url)}function changeMonth(direction){const newDate=new Date(AppState.currentMonth);newDate.setMonth(newDate.getMonth()+direction);AppState.currentMonth=newDate;loadDashboardData()}function switchCategoryTab(type){const incomeTab=document.getElementById('income-categories-tab');const expenseTab=document.getElementById('expense-categories-tab');if(type==='income'){incomeTab.classList.add('active');expenseTab.classList.remove('active')}else{expenseTab.classList.add('active');incomeTab.classList.remove('active')}loadCategoriesData()}
+    </script>
+</body>
 </html>
