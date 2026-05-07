@@ -3,504 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五子棋小游戏 (HTML版)</title>
+    <title>旅游记账神器 - 智能分摊</title>
     <style>
         :root {
-            --board-bg: #e6cca0;      /* 浅木色 */
-            --line-color: #5d4037;    /* 深棕色线条 */
-            --black-piece: #000000;
-            --white-piece: #ffffff;
-            --grid-size: 30px;
-            --piece-size: 28px;
-            --text-color: #333333;
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg: #f8fafc;
         }
 
-        body {
-            font-family: 'Microsoft YaHei', '宋体', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            color: var(--text-color);
-        }
-
-        /* 标题与状态栏 */
-        .header {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
-
-        .status-bar {
-            font-size: 16px;
-            font-weight: bold;
-            padding: 8px 16px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: inline-block;
-        }
-
-        /* 棋盘区域 */
-        .board-container {
-            background-color: var(--board-bg);
-            padding: 15px; /* 棋盘边缘留白 */
-            border-radius: 4px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        #board {
-            width: calc(15 * var(--grid-size));
-            height: calc(15 * var(--grid-size));
-            position: relative;
-            display: grid;
-            grid-template-columns: repeat(15, 1fr);
-            grid-template-rows: repeat(15, 1fr);
-            cursor: pointer;
-        }
-
-        /* 棋盘格子（交叉点逻辑） */
-        .cell {
-            width: var(--grid-size);
-            height: var(--grid-size);
-            position: relative;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* 绘制横竖线 */
-        .cell::before { /* 横线 */
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 1px;
-            background-color: var(--line-color);
-            top: 50%;
-            left: 0;
-            z-index: 0;
-        }
-
-        .cell::after { /* 竖线 */
-            content: '';
-            position: absolute;
-            height: 100%;
-            width: 1px;
-            background-color: var(--line-color);
-            left: 50%;
-            top: 0;
-            z-index: 0;
-        }
-
-        /* 边缘特殊处理：去掉延伸到棋盘外的线 */
-        .cell.top-edge::after { top: 50%; height: 50%; }
-        .cell.bottom-edge::after { height: 50%; }
-        .cell.left-edge::before { left: 50%; width: 50%; }
-        .cell.right-edge::before { width: 50%; }
-
-        /* 棋子样式 */
-        .piece {
-            width: var(--piece-size);
-            height: var(--piece-size);
-            border-radius: 50%;
-            z-index: 1; /* 在线条之上 */
-            box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .piece.black {
-            background: radial-gradient(circle at 30% 30%, #444, #000);
-        }
-
-        .piece.white {
-            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
-            border: 1px solid #ccc; /* 白色描边需求 */
-        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: #1e293b; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         
-        /* 最新落子标记 */
-        .piece.last-move::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 6px;
-            height: 6px;
-            background-color: red;
-            border-radius: 50%;
-        }
+        /* 顶部卡片 */
+        .header-card { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .total-amount { font-size: 2rem; font-weight: bold; margin: 10px 0; }
 
-        /* 悬停预览 (Ghost Piece) */
-        #board.turn-black .cell:not(.has-piece):hover::after {
-            content: '';
-            width: var(--piece-size);
-            height: var(--piece-size);
-            background-color: rgba(0,0,0,0.3);
-            border-radius: 50%;
-            position: absolute;
-            z-index: 2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
+        /* 标签页导航 */
+        .tabs { display: flex; background: #fff; border-radius: 12px; padding: 5px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab-btn { flex: 1; border: none; background: none; padding: 10px; border-radius: 8px; cursor: pointer; color: var(--secondary); font-weight: 500; }
+        .tab-btn.active { background: var(--primary); color: white; }
 
-        #board.turn-white .cell:not(.has-piece):hover::after {
-            content: '';
-            width: var(--piece-size);
-            height: var(--piece-size);
-            background-color: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            position: absolute;
-            z-index: 2;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 1px solid #999;
-        }
-        
-        /* 覆盖原本的线条after，需要提高优先级或重置 */
-        #board .cell:hover::after {
-            /* 保持竖线显示，预览层用单独元素或伪元素技巧。
-               由于::after已被用于画线，这里我们动态添加一个预览层DOM更稳妥，
-               或者简化：只改变cursor。
-               
-               修正方案：为了严格符合CSS绘制且不增加DOM，
-               我们利用 radial-gradient 在 :hover 状态下修改 background 
-               来模拟半透明棋子，而不破坏 ::before/::after 的线条。
-            */
-            content: ''; /* 恢复 content */
-        }
-        
-        /* 修正后的悬停逻辑：使用 radial-gradient 在 cell 本身模拟 */
-        #board.turn-black .cell:not(.has-piece):hover {
-            background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.3) 45%, transparent 46%);
-        }
-        #board.turn-white .cell:not(.has-piece):hover {
-            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.6) 45%, transparent 46%);
-        }
+        /* 内容板块 */
+        .section { display: none; }
+        .section.active { display: block; }
 
-        /* 按钮区域 */
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 15px;
-        }
+        /* 卡片样式 */
+        .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h3 { margin-top: 0; font-size: 1.1rem; border-left: 4px solid var(--primary); padding-left: 10px; }
 
-        button {
-            width: 80px;
-            height: 30px;
-            border: none;
-            border-radius: 4px;
-            background-color: #e0e0e0;
-            color: var(--text-color);
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+        /* 表单控件 */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--secondary); }
+        input, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-ghost { background: #f1f5f9; color: var(--secondary); margin-top: 10px; }
 
-        button:hover {
-            background-color: #bdbdbd;
-        }
+        /* 成员勾选框列表 */
+        .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; }
+        .checkbox-item { display: flex; align-items: center; font-size: 0.9rem; }
+        .checkbox-item input { width: auto; margin-right: 8px; }
 
-        button:active {
-            background-color: #9e9e9e;
-        }
+        /* 列表项 */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .list-item:last-child { border: none; }
+        .expense-info { flex: 1; }
+        .expense-meta { font-size: 0.8rem; color: var(--secondary); }
+        .amount-pos { color: var(--success); font-weight: bold; }
+        .amount-neg { color: var(--danger); font-weight: bold; }
 
-        button:disabled {
-            background-color: #f5f5f5;
-            color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* 音效开关 */
-        .sound-toggle {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-        
-        /* 禁止操作的简单的视觉反馈动画 */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-        .shake {
-            animation: shake 0.3s ease-in-out;
-        }
-
+        /* 结算样式 */
+        .settle-card { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #dcfce7; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+        .settled { text-decoration: line-through; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>五子棋 HTML版</h1>
-        <div id="status" class="status-bar">当前回合：黑棋</div>
+<div class="container">
+    <div class="header-card">
+        <div id="projectNameDisplay">我的旅行账本</div>
+        <div class="total-amount">¥ <span id="totalSpend">0.00</span></div>
+        <div style="font-size: 0.8rem; opacity: 0.9;">总计支出金额</div>
     </div>
 
-    <div class="board-container" id="boardContainer">
-        <div id="board" class="turn-black">
+    <nav class="tabs">
+        <button class="tab-btn active" onclick="showTab('tab-manage')">成员</button>
+        <button class="tab-btn" onclick="showTab('tab-add')">记账</button>
+        <button class="tab-btn" onclick="showTab('tab-list')">流水</button>
+        <button class="tab-btn" onclick="showTab('tab-result')">结算</button>
+    </nav>
+
+    <!-- 成员管理 -->
+    <section id="tab-manage" class="section active">
+        <div class="card">
+            <h3>添加成员</h3>
+            <div class="form-group">
+                <input type="text" id="newMemberName" placeholder="输入成员姓名...">
+                <button class="btn btn-primary" style="margin-top:10px" onclick="addMember()">添加</button>
             </div>
-    </div>
-
-    <div class="controls">
-        <button id="btnRestart" onclick="resetGame()">重新开始</button>
-        <button id="btnUndo" onclick="undoMove()" disabled>悔棋</button>
-        <div class="sound-toggle">
-            <input type="checkbox" id="soundToggle" checked>
-            <label for="soundToggle" style="margin-left:5px; cursor:pointer;">音效</label>
         </div>
-    </div>
+        <div class="card">
+            <h3>成员列表</h3>
+            <div id="memberList"></div>
+        </div>
+    </section>
 
-    <script>
-        // --- 游戏配置常量 ---
-        const BOARD_SIZE = 15;
-        const PLAYER_BLACK = 1;
-        const PLAYER_WHITE = 2;
+    <!-- 记账 -->
+    <section id="tab-add" class="section">
+        <div class="card">
+            <h3>新增一笔费用</h3>
+            <div class="form-group">
+                <label>金额 (¥)</label>
+                <input type="number" id="expAmount" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>描述</label>
+                <input type="text" id="expDesc" placeholder="例如：聚餐、打车...">
+            </div>
+            <div class="form-group">
+                <label>谁付的钱？</label>
+                <select id="expPayer"></select>
+            </div>
+            <div class="form-group">
+                <label>谁参与平摊？</label>
+                <div class="checkbox-grid" id="splittersList"></div>
+            </div>
+            <button class="btn btn-primary" onclick="addExpense()">确认记录</button>
+        </div>
+    </section>
+
+    <!-- 流水列表 -->
+    <section id="tab-list" class="section">
+        <div id="expenseHistory"></div>
+    </section>
+
+    <!-- 结算结果 -->
+    <section id="tab-result" class="section">
+        <div class="card">
+            <h3>结清建议</h3>
+            <div id="settlementResults"></div>
+        </div>
+        <button class="btn btn-ghost" onclick="clearData()">清空所有数据</button>
+    </section>
+</div>
+
+<script>
+    // --- 数据结构 ---
+    let state = {
+        projectName: "夏日旅行计划",
+        members: [], // ["张三", "李四"]
+        expenses: [], // {id, desc, amount, payer, splitters, settled: false}
+    };
+
+    // --- 初始化 ---
+    function init() {
+        const saved = localStorage.getItem('travel_data');
+        if (saved) state = JSON.parse(saved);
+        renderAll();
+    }
+
+    function saveData() {
+        localStorage.setItem('travel_data', JSON.stringify(state));
+        renderAll();
+    }
+
+    // --- 路由切换 ---
+    function showTab(tabId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- 成员管理 ---
+    function addMember() {
+        const name = document.getElementById('newMemberName').value.trim();
+        if (name && !state.members.includes(name)) {
+            state.members.push(name);
+            document.getElementById('newMemberName').value = '';
+            saveData();
+        }
+    }
+
+    function removeMember(name) {
+        state.members = state.members.filter(m => m !== name);
+        saveData();
+    }
+
+    // --- 记账逻辑 ---
+    function addExpense() {
+        const amount = parseFloat(document.getElementById('expAmount').value);
+        const desc = document.getElementById('expDesc').value || "未命名支出";
+        const payer = document.getElementById('expPayer').value;
+        const selectedSplitters = Array.from(document.querySelectorAll('.splitter-check:checked')).map(el => el.value);
+
+        if (!amount || !payer || selectedSplitters.length === 0) {
+            alert("请完整填写金额、付款人和参与人！");
+            return;
+        }
+
+        const newExp = {
+            id: Date.now(),
+            amount,
+            desc,
+            payer,
+            splitters: selectedSplitters,
+            date: new Date().toLocaleDateString()
+        };
+
+        state.expenses.push(newExp);
+        document.getElementById('expAmount').value = '';
+        document.getElementById('expDesc').value = '';
+        saveData();
+        showTab('tab-list');
+    }
+
+    // --- 核心计算算法 ---
+    function calculateBalances() {
+        let balances = {};
+        state.members.forEach(m => balances[m] = 0);
+
+        state.expenses.forEach(exp => {
+            // 付款人增加余额
+            balances[exp.payer] += exp.amount;
+            // 每一个分摊人减少余额
+            const share = exp.amount / exp.splitters.length;
+            exp.splitters.forEach(s => {
+                balances[s] -= share;
+            });
+        });
+        return balances;
+    }
+
+    function getSettlementPlan() {
+        const balances = calculateBalances();
+        let debtors = []; // 欠钱的
+        let creditors = []; // 该收钱的
+
+        for (let name in balances) {
+            if (balances[name] < -0.01) debtors.push({name, amt: Math.abs(balances[name])});
+            else if (balances[name] > 0.01) creditors.push({name, amt: balances[name]});
+        }
+
+        let plan = [];
+        let i = 0, j = 0;
+        while (i < debtors.length && j < creditors.length) {
+            let d = debtors[i];
+            let c = creditors[j];
+            let settleAmt = Math.min(d.amt, c.amt);
+            
+            plan.push({ from: d.name, to: c.name, amount: settleAmt.toFixed(2) });
+            
+            d.amt -= settleAmt;
+            c.amt -= settleAmt;
+            
+            if (d.amt <= 0) i++;
+            if (c.amt <= 0) j++;
+        }
+        return plan;
+    }
+
+    // --- 渲染 UI ---
+    function renderAll() {
+        // 渲染总额
+        const total = state.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        document.getElementById('totalSpend').innerText = total.toFixed(2);
+
+        // 渲染成员列表
+        const mList = document.getElementById('memberList');
+        mList.innerHTML = state.members.map(m => `
+            <div class="list-item">
+                <span>${m}</span>
+                <button onclick="removeMember('${m}')" style="color:var(--danger); border:none; background:none; cursor:pointer;">删除</button>
+            </div>
+        `).join('');
+
+        // 渲染下拉框和勾选框
+        const payerSelect = document.getElementById('expPayer');
+        payerSelect.innerHTML = state.members.map(m => `<option value="${m}">${m}</option>`).join('');
         
-        // --- 游戏状态 ---
-        let boardState = []; // 二维数组存储棋盘
-        let currentPlayer = PLAYER_BLACK;
-        let isGameActive = true;
-        let moveHistory = []; // 悔棋栈
-        
-        // --- DOM 元素 ---
-        const boardEl = document.getElementById('board');
-        const statusEl = document.getElementById('status');
-        const btnUndo = document.getElementById('btnUndo');
-        const soundToggle = document.getElementById('soundToggle');
-        const boardContainer = document.getElementById('boardContainer');
+        const sList = document.getElementById('splittersList');
+        sList.innerHTML = state.members.map(m => `
+            <label class="checkbox-item">
+                <input type="checkbox" class="splitter-check" value="${m}" checked> ${m}
+            </label>
+        `).join('');
 
-        // --- 初始化 ---
-        function initGame() {
-            // 初始化状态
-            boardState = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
-            currentPlayer = PLAYER_BLACK;
-            isGameActive = true;
-            moveHistory = [];
-            
-            updateUIStatus();
-            renderBoard();
-            btnUndo.disabled = true;
+        // 渲染历史流水
+        const hList = document.getElementById('expenseHistory');
+        hList.innerHTML = state.expenses.length ? state.expenses.slice().reverse().map(exp => `
+            <div class="card">
+                <div class="list-item">
+                    <div class="expense-info">
+                        <div><strong>${exp.desc}</strong></div>
+                        <div class="expense-meta">${exp.date} · ${exp.payer} 付款</div>
+                    </div>
+                    <div class="amount-neg">¥${exp.amount.toFixed(2)}</div>
+                </div>
+                <div class="expense-meta">分摊人: ${exp.splitters.join(', ')}</div>
+            </div>
+        `).join('') : '<p style="text-align:center; color:var(--secondary);">暂无记录</p>';
+
+        // 渲染结算方案
+        const rList = document.getElementById('settlementResults');
+        const plans = getSettlementPlan();
+        rList.innerHTML = plans.length ? plans.map((p, idx) => `
+            <div class="settle-card" id="settle-${idx}">
+                <span><strong>${p.from}</strong> ➔ <strong>${p.to}</strong></span>
+                <div>
+                    <span style="font-weight:bold; margin-right:10px;">¥${p.amount}</span>
+                    <input type="checkbox" onclick="toggleSettle(${idx})">
+                </div>
+            </div>
+        `).join('') : '<p style="text-align:center;">账目已平或暂无支出</p>';
+    }
+
+    function toggleSettle(idx) {
+        document.getElementById(`settle-${idx}`).classList.toggle('settled');
+    }
+
+    function clearData() {
+        if(confirm("确定要清空所有旅游数据吗？")) {
+            state = { projectName: "我的旅行账本", members: [], expenses: [] };
+            saveData();
         }
+    }
 
-        // --- 渲染棋盘 ---
-        function renderBoard() {
-            boardEl.innerHTML = ''; // 清空现有内容
-            
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.dataset.row = r;
-                    cell.dataset.col = c;
+    window.onload = init;
+</script>
 
-                    // 处理边缘线条
-                    if (r === 0) cell.classList.add('top-edge');
-                    if (r === BOARD_SIZE - 1) cell.classList.add('bottom-edge');
-                    if (c === 0) cell.classList.add('left-edge');
-                    if (c === BOARD_SIZE - 1) cell.classList.add('right-edge');
-
-                    // 如果该位置有棋子
-                    const cellValue = boardState[r][c];
-                    if (cellValue !== 0) {
-                        const piece = document.createElement('div');
-                        piece.classList.add('piece');
-                        piece.classList.add(cellValue === PLAYER_BLACK ? 'black' : 'white');
-                        cell.classList.add('has-piece'); // 用于CSS悬停逻辑
-                        
-                        // 标记最后一步
-                        if (moveHistory.length > 0) {
-                            const last = moveHistory[moveHistory.length - 1];
-                            if (last.row === r && last.col === c) {
-                                piece.classList.add('last-move');
-                            }
-                        }
-                        
-                        cell.appendChild(piece);
-                    }
-
-                    // 绑定点击事件
-                    cell.addEventListener('click', () => handleCellClick(r, c));
-                    
-                    boardEl.appendChild(cell);
-                }
-            }
-        }
-
-        // --- 核心交互逻辑 ---
-        function handleCellClick(row, col) {
-            if (!isGameActive) return;
-
-            // 检查是否已落子
-            if (boardState[row][col] !== 0) {
-                // 视觉反馈：禁止操作
-                // 简单的震动效果
-                const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
-                if(cell) {
-                    cell.classList.add('shake');
-                    setTimeout(() => cell.classList.remove('shake'), 300);
-                }
-                return;
-            }
-
-            // 执行落子
-            placePiece(row, col);
-        }
-
-        function placePiece(row, col) {
-            // 1. 更新数据
-            boardState[row][col] = currentPlayer;
-            moveHistory.push({ row, col, player: currentPlayer });
-            
-            // 2. 播放音效
-            playClickSound();
-
-            // 3. 检查胜负
-            if (checkWin(row, col, currentPlayer)) {
-                renderBoard(); // 重绘以显示最后一步标记
-                endGame(currentPlayer === PLAYER_BLACK ? "黑棋胜" : "白棋胜");
-                return;
-            }
-            
-            // 4. 检查平局
-            if (moveHistory.length === BOARD_SIZE * BOARD_SIZE) {
-                renderBoard();
-                endGame("平局");
-                return;
-            }
-
-            // 5. 切换回合
-            currentPlayer = currentPlayer === PLAYER_BLACK ? PLAYER_WHITE : PLAYER_BLACK;
-            updateUIStatus();
-            
-            // 6. 局部DOM更新优化 (比全量重绘更高效，但为了逻辑简单这里用了全量renderBoard的一个简化版逻辑：直接操作DOM)
-            // 为了代码简洁性和维护性，这里调用 renderBoard() 确保 "last-move" 标记正确转移
-            renderBoard();
-        }
-
-        // --- 胜负判定算法 ---
-        function checkWin(row, col, player) {
-            const directions = [
-                [1, 0],   // 横向
-                [0, 1],   // 纵向
-                [1, 1],   // 右下斜
-                [1, -1]   // 左下斜
-            ];
-
-            for (let [dr, dc] of directions) {
-                let count = 1; // 当前落子算1个
-
-                // 向一个方向搜索
-                let r = row + dr;
-                let c = col + dc;
-                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && boardState[r][c] === player) {
-                    count++;
-                    r += dr;
-                    c += dc;
-                }
-
-                // 向相反方向搜索
-                r = row - dr;
-                c = col - dc;
-                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && boardState[r][c] === player) {
-                    count++;
-                    r -= dr;
-                    c -= dc;
-                }
-
-                if (count >= 5) return true;
-            }
-            return false;
-        }
-
-        // --- 游戏结束处理 ---
-        function endGame(resultText) {
-            isGameActive = false;
-            statusEl.innerText = `游戏结束：${resultText}`;
-            statusEl.style.color = '#d32f2f';
-            // 禁用悔棋（需求未明确，但通常游戏结束可以看盘，这里保持启用以便查看，或者禁用防止修改结果）
-            // 按照需求"禁止继续落子"，这里已通过isGameActive控制。
-            // 弹窗提示
-            setTimeout(() => alert(resultText), 100);
-        }
-
-        // --- 辅助功能 ---
-        function resetGame() {
-            if (confirm('确定要重新开始吗？')) {
-                initGame();
-            }
-        }
-
-        function undoMove() {
-            if (moveHistory.length === 0 || !isGameActive) return;
-
-            // 撤销一步
-            const lastMove = moveHistory.pop();
-            boardState[lastMove.row][lastMove.col] = 0;
-            
-            // 恢复回合
-            currentPlayer = lastMove.player;
-            isGameActive = true; // 如果是在结束后悔棋，恢复游戏状态
-            
-            updateUIStatus();
-            renderBoard();
-        }
-
-        function updateUIStatus() {
-            if (!isGameActive) return;
-            const text = currentPlayer === PLAYER_BLACK ? "黑棋回合" : "白棋回合";
-            statusEl.innerText = text;
-            statusEl.style.color = '#333';
-            
-            // 更新棋盘CSS类以控制hover样式
-            boardEl.className = currentPlayer === PLAYER_BLACK ? 'turn-black' : 'turn-white';
-            
-            // 更新悔棋按钮状态
-            btnUndo.disabled = moveHistory.length === 0;
-        }
-
-        // --- 音效系统 (Web Audio API) ---
-        // 满足"无外部依赖"需求，使用代码生成简单的“哒”声
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playClickSound() {
-            if (!soundToggle.checked) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.type = 'sine';
-            // 模拟落子声：短促的低频音，音量快速衰减
-            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
-        }
-
-        // 启动游戏
-        initGame();
-
-    </script>
 </body>
 </html>
